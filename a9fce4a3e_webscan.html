@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Cyber-Zero Web Scanner</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#07090f;--bg2:#0d1120;--bg3:#111828;
+  --purple:#6c63ff;--blue:#3ecfff;--green:#00e676;
+  --red:#ff3c5a;--gold:#ffb300;--orange:#ff6432;
+  --border:rgba(255,255,255,0.07);
+}
+html,body{width:100%;min-height:100vh;background:var(--bg);font-family:'Inter',sans-serif;color:#fff;overflow-x:hidden;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:#6c63ff55;border-radius:4px;}
+
+/* STARS */
+.stars{position:fixed;inset:0;pointer-events:none;z-index:0;}
+.star{position:absolute;border-radius:50%;background:#fff;animation:twinkle linear infinite;}
+@keyframes twinkle{0%,100%{opacity:.05}50%{opacity:.5}}
+
+/* WRAP */
+.wrap{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;}
+
+/* HEADER */
+header{padding:20px 24px 0;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;}
+.logo-row{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.logo-icon{width:42px;height:42px;background:linear-gradient(135deg,var(--purple),var(--blue));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+.logo-name{font-size:20px;font-weight:900;}
+.logo-name span{color:var(--purple);}
+.tagline{font-size:13px;color:rgba(255,255,255,0.4);letter-spacing:1px;}
+
+/* HERO INPUT */
+.hero{padding:32px 20px 20px;max-width:700px;margin:0 auto;width:100%;}
+.hero-title{font-size:clamp(22px,5vw,38px);font-weight:900;text-align:center;margin-bottom:8px;line-height:1.2;}
+.hero-title span{background:linear-gradient(135deg,var(--purple),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.hero-sub{text-align:center;font-size:14px;color:rgba(255,255,255,0.4);margin-bottom:28px;}
+
+.input-card{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:20px;box-shadow:0 0 40px rgba(108,99,255,0.1);}
+.input-row{display:flex;gap:10px;margin-bottom:12px;}
+.url-input{
+  flex:1;padding:14px 16px;
+  background:rgba(255,255,255,0.04);
+  border:1px solid var(--border);border-radius:12px;
+  color:#fff;font-size:15px;font-family:'Inter',sans-serif;outline:none;
+  transition:border-color 0.2s;
+}
+.url-input:focus{border-color:var(--purple);}
+.url-input::placeholder{color:rgba(255,255,255,0.25);}
+.scan-btn{
+  padding:14px 24px;background:linear-gradient(135deg,var(--purple),#4a3dcc);
+  border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:700;
+  cursor:pointer;white-space:nowrap;transition:all 0.2s;font-family:'Inter',sans-serif;
+  box-shadow:0 4px 20px rgba(108,99,255,0.4);
+}
+.scan-btn:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(108,99,255,0.6);}
+.scan-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+.quick-urls{display:flex;gap:6px;flex-wrap:wrap;}
+.quick-label{font-size:11px;color:rgba(255,255,255,0.3);align-self:center;white-space:nowrap;}
+.quick-btn{padding:5px 12px;background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.2);border-radius:20px;font-size:11px;color:#a89aff;cursor:pointer;transition:all 0.15s;font-family:'Inter',sans-serif;}
+.quick-btn:hover{background:rgba(108,99,255,0.2);}
+
+/* PROGRESS */
+.progress-wrap{display:none;padding:20px;max-width:700px;margin:0 auto;width:100%;}
+.progress-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:22px;}
+.progress-title{font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.progress-steps{display:flex;flex-direction:column;gap:8px;}
+.step{display:flex;align-items:center;gap:10px;font-size:13px;color:rgba(255,255,255,0.4);transition:color 0.3s;}
+.step.done{color:var(--green);}
+.step.active{color:#fff;}
+.step-dot{width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;transition:all 0.3s;}
+.step.done .step-dot{background:rgba(0,230,118,0.15);border-color:var(--green);color:var(--green);}
+.step.active .step-dot{background:rgba(108,99,255,0.2);border-color:var(--purple);animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(108,99,255,0.4)}50%{box-shadow:0 0 0 6px rgba(108,99,255,0)}}
+.bar-wrap{background:rgba(255,255,255,0.05);border-radius:4px;height:5px;margin-top:14px;overflow:hidden;}
+.bar{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--purple),var(--blue));transition:width 0.5s ease;width:0%;}
+
+/* REPORT */
+#report{display:none;padding:20px;max-width:900px;margin:0 auto;width:100%;}
+
+/* RISK HERO */
+.risk-hero{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:22px;margin-bottom:16px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+.risk-ring{width:100px;height:100px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column;flex-shrink:0;position:relative;}
+.risk-ring::before{content:'';position:absolute;inset:0;border-radius:50%;background:conic-gradient(var(--ring-color,#ff3c5a) var(--ring-pct,270deg),rgba(255,255,255,0.05) 0);padding:6px;}
+.risk-ring-inner{width:80px;height:80px;border-radius:50%;background:var(--bg2);display:flex;align-items:center;justify-content:center;flex-direction:column;position:relative;z-index:1;}
+.risk-score{font-size:26px;font-weight:900;}
+.risk-lbl{font-size:9px;color:rgba(255,255,255,0.4);letter-spacing:1px;}
+.risk-info{flex:1;min-width:200px;}
+.risk-name{font-size:20px;font-weight:900;margin-bottom:4px;}
+.risk-desc{font-size:13px;color:rgba(255,255,255,0.5);line-height:1.6;margin-bottom:10px;}
+.risk-pills{display:flex;gap:6px;flex-wrap:wrap;}
+.rpill{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+
+/* STATS MINI */
+.stats-mini{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:16px;}
+.stat-mini{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;}
+.stat-mini-num{font-size:22px;font-weight:900;margin-bottom:2px;}
+.stat-mini-lbl{font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:0.5px;}
+
+/* TABS */
+.tabs{display:flex;gap:4px;margin-bottom:16px;overflow-x:auto;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:4px;}
+.tab{padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;color:rgba(255,255,255,0.5);cursor:pointer;white-space:nowrap;border:none;background:transparent;font-family:'Inter',sans-serif;transition:all 0.15s;}
+.tab:hover{color:#fff;}
+.tab.active{background:rgba(108,99,255,0.15);color:#fff;border:1px solid rgba(108,99,255,0.2);}
+
+/* TAB CONTENT */
+.tab-pane{display:none;}
+.tab-pane.active{display:block;}
+
+/* CARDS */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:12px;}
+.card-head{font-size:14px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+
+/* FINDING */
+.finding{border-radius:10px;padding:12px 14px;margin-bottom:8px;border-left:3px solid;}
+.finding.c{border-color:var(--red);background:rgba(255,60,90,0.06);}
+.finding.h{border-color:var(--orange);background:rgba(255,100,50,0.06);}
+.finding.m{border-color:var(--gold);background:rgba(255,179,0,0.06);}
+.finding.l{border-color:var(--green);background:rgba(0,230,118,0.06);}
+.finding-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px;}
+.finding-title{font-size:13px;font-weight:700;}
+.finding-desc{font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:5px;line-height:1.5;}
+.finding-fix{font-size:11px;color:#90be6d;background:rgba(144,190,109,0.08);border-radius:6px;padding:5px 8px;}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;white-space:nowrap;}
+.bc{background:rgba(255,60,90,0.12);color:var(--red);}
+.bh{background:rgba(255,100,50,0.12);color:var(--orange);}
+.bm{background:rgba(255,179,0,0.12);color:var(--gold);}
+.bl{background:rgba(0,230,118,0.12);color:var(--green);}
+.bb{background:rgba(62,207,255,0.12);color:var(--blue);}
+.bp{background:rgba(108,99,255,0.12);color:#a89aff;}
+.bg{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);}
+
+/* STRUCTURE TREE */
+.page-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;margin-bottom:4px;background:rgba(255,255,255,0.02);font-size:12px;}
+.page-url{flex:1;color:var(--blue);word-break:break-all;}
+.page-status{font-weight:700;width:32px;text-align:center;}
+
+/* HEADER CHECK */
+.header-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;}
+
+/* TECH TAG */
+.tech-tag{display:inline-flex;flex-direction:column;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin:4px;min-width:80px;text-align:center;}
+.tech-tag .ti{font-size:22px;margin-bottom:4px;}
+.tech-tag .tn{font-size:12px;font-weight:700;}
+.tech-tag .tc{font-size:10px;color:rgba(255,255,255,0.3);margin-top:1px;}
+
+/* SHARE */
+.share-box{background:var(--bg3);border:1px solid rgba(108,99,255,0.3);border-radius:12px;padding:14px;margin-top:12px;}
+.share-title{font-size:12px;color:var(--purple);font-weight:700;margin-bottom:8px;letter-spacing:1px;}
+.share-text{font-size:12px;color:rgba(255,255,255,0.6);line-height:1.8;white-space:pre-wrap;font-family:monospace;}
+.share-btns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.share-btn{padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:none;font-family:'Inter',sans-serif;transition:all 0.15s;}
+.btn-wa{background:#25D366;color:#fff;}
+.btn-copy{background:rgba(108,99,255,0.15);color:#a89aff;border:1px solid rgba(108,99,255,0.2);}
+.btn-pdf{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.7);border:1px solid var(--border);}
+
+/* NEW SCAN BTN */
+.new-scan-btn{display:flex;align-items:center;gap:6px;padding:10px 18px;background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.2);border-radius:10px;color:#a89aff;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:16px;font-family:'Inter',sans-serif;transition:all 0.15s;}
+.new-scan-btn:hover{background:rgba(108,99,255,0.2);}
+
+/* EMPTY */
+.empty{text-align:center;padding:24px;color:rgba(255,255,255,0.3);font-size:13px;}
+
+@media(max-width:600px){
+  .input-row{flex-direction:column;}
+  .scan-btn{width:100%;}
+  .risk-hero{flex-direction:column;text-align:center;}
+  .risk-pills{justify-content:center;}
+}
+</style>
+</head>
+<body>
+<div class="stars" id="stars"></div>
+<div class="wrap">
+
+<!-- HEADER -->
+<header>
+  <div class="logo-row">
+    <div class="logo-icon">🛡</div>
+    <div class="logo-name"><span>Cyber</span>-Zero Scanner</div>
+  </div>
+  <div class="tagline">POWERED BY SECURECHECK AI · SULEIMAN ALHASSAN</div>
+</header>
+
+<!-- HERO INPUT -->
+<div class="hero">
+  <div class="hero-title">Paste a URL.<br><span>Get a full security report.</span></div>
+  <div class="hero-sub">Instant website structure analysis · No login required</div>
+  <div class="input-card">
+    <div class="input-row">
+      <input class="url-input" id="urlInput" type="url" placeholder="https://yourwebsite.com" autocomplete="off" autocapitalize="off" spellcheck="false"/>
+      <button class="scan-btn" id="scanBtn" onclick="startScan()">🔍 Scan</button>
+    </div>
+    <div class="quick-urls">
+      <span class="quick-label">Try:</span>
+      <button class="quick-btn" onclick="setUrl('https://example.com')">example.com</button>
+      <button class="quick-btn" onclick="setUrl('https://github.com')">github.com</button>
+      <button class="quick-btn" onclick="setUrl('https://wordpress.org')">wordpress.org</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROGRESS -->
+<div class="progress-wrap" id="progressWrap">
+  <div class="progress-card">
+    <div class="progress-title">⚡ Analyzing <span id="scanningUrl" style="color:var(--blue)"></span></div>
+    <div class="progress-steps" id="steps">
+      <div class="step" id="s0"><div class="step-dot">1</div>Connecting & fetching page</div>
+      <div class="step" id="s1"><div class="step-dot">2</div>Reading website structure</div>
+      <div class="step" id="s2"><div class="step-dot">3</div>Checking security headers</div>
+      <div class="step" id="s3"><div class="step-dot">4</div>Detecting technology stack</div>
+      <div class="step" id="s4"><div class="step-dot">5</div>Scanning for vulnerabilities</div>
+      <div class="step" id="s5"><div class="step-dot">6</div>Checking SSL & exposed files</div>
+      <div class="step" id="s6"><div class="step-dot">7</div>Building your report</div>
+    </div>
+    <div class="bar-wrap"><div class="bar" id="progressBar"></div></div>
+  </div>
+</div>
+
+<!-- REPORT -->
+<div id="report">
+  <div style="max-width:900px;margin:0 auto;padding:0 20px 40px;">
+    <button class="new-scan-btn" onclick="resetScan()">← New Scan</button>
+
+    <!-- RISK HERO -->
+    <div class="risk-hero" id="riskHero"></div>
+
+    <!-- STATS -->
+    <div class="stats-mini" id="statsMini"></div>
+
+    <!-- TABS -->
+    <div class="tabs" id="reportTabs"></div>
+
+    <!-- TAB CONTENT -->
+    <div id="tabContent"></div>
+
+    <!-- WHATSAPP SHARE -->
+    <div class="card">
+      <div class="card-head">📤 Share This Report</div>
+      <div class="share-box">
+        <div class="share-title">WHATSAPP REPORT SUMMARY</div>
+        <div class="share-text" id="waText"></div>
+      </div>
+      <div class="share-btns">
+        <button class="share-btn btn-wa" onclick="shareWA()">📱 Share on WhatsApp</button>
+        <button class="share-btn btn-copy" onclick="copyReport()">📋 Copy Text</button>
+        <button class="share-btn btn-pdf" onclick="printReport()">🖨 Print / PDF</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end wrap -->
+
+<script>
+// ══════════════════════════════════════════════════
+//  CYBER-ZERO WEB SCANNER ENGINE
+// ══════════════════════════════════════════════════
+
+// Stars
+(()=>{const el=document.getElementById('stars');for(let i=0;i<80;i++){const s=document.createElement('div');s.className='star';const z=Math.random()*1.5+.3;s.style.cssText=`width:${z}px;height:${z}px;top:${Math.random()*100}%;left:${Math.random()*100}%;animation-duration:${2+Math.random()*5}s;animation-delay:${Math.random()*5}s;`;el.appendChild(s);}})();
+
+function setUrl(u){document.getElementById('urlInput').value=u;}
+
+let scanData = {};
+
+function resetScan(){
+  document.getElementById('report').style.display='none';
+  document.querySelector('.hero').style.display='block';
+  document.getElementById('progressWrap').style.display='none';
+  document.getElementById('urlInput').value='';
+  document.getElementById('scanBtn').disabled=false;
+  document.getElementById('scanBtn').textContent='🔍 Scan';
+}
+
+// ── MAIN SCAN ──
+async function startScan(){
+  let url = document.getElementById('urlInput').value.trim();
+  if(!url){alert('Please enter a website URL');return;}
+  if(!url.startsWith('http://') && !url.startsWith('https://')) url='https://'+url;
+
+  try{ new URL(url); }catch{ alert('Invalid URL — please check and try again.'); return; }
+
+  document.getElementById('scanBtn').disabled=true;
+  document.getElementById('scanBtn').textContent='Scanning...';
+  document.querySelector('.hero').style.display='none';
+  document.getElementById('report').style.display='none';
+  document.getElementById('progressWrap').style.display='block';
+  document.getElementById('scanningUrl').textContent=new URL(url).hostname;
+
+  // Reset steps
+  for(let i=0;i<7;i++){ const s=document.getElementById('s'+i); s.className='step'; s.querySelector('.step-dot').textContent=i+1; }
+
+  scanData = {url, domain: new URL(url).hostname, ts: new Date()};
+
+  await runAnalysis(url);
+
+  document.getElementById('progressWrap').style.display='none';
+  buildReport();
+  document.getElementById('report').style.display='block';
+  document.getElementById('report').scrollIntoView({behavior:'smooth'});
+}
+
+// ── PROGRESS HELPERS ──
+function stepDone(i){ const s=document.getElementById('s'+i); s.className='step done'; s.querySelector('.step-dot').textContent='✓'; }
+function stepActive(i){ document.getElementById('s'+i).className='step active'; document.getElementById('progressBar').style.width=((i+1)/7*100)+'%'; }
+
+// ── CORS PROXY ──
+const PROXIES=[
+  u=>`https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
+  u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,
+  u=>`https://thingproxy.freeboard.io/fetch/${u}`,
+];
+
+async function fetchViaProxy(url, attempt=0){
+  if(attempt>=PROXIES.length) return null;
+  try{
+    const proxyUrl=PROXIES[attempt](url);
+    const res=await fetch(proxyUrl,{signal:AbortSignal.timeout(10000)});
+    if(!res.ok) return fetchViaProxy(url,attempt+1);
+    const data=await res.json();
+    return data.contents||data;
+  }catch{
+    return fetchViaProxy(url,attempt+1);
+  }
+}
+
+// ── ANALYSIS ──
+async function runAnalysis(url){
+  const domain=new URL(url).hostname;
+
+  // Step 0: Connect
+  stepActive(0);
+  let html='', headers={}, statusCode=200;
+  try{
+    const raw=await fetchViaProxy(url);
+    html=typeof raw==='string'?raw:(raw?.contents||'');
+    await delay(500);
+  }catch(e){ html=''; }
+  stepDone(0);
+
+  // Step 1: Structure
+  stepActive(1);
+  await delay(600);
+  const structure = analyzeStructure(html, url);
+  scanData.structure = structure;
+  stepDone(1);
+
+  // Step 2: Security Headers
+  stepActive(2);
+  await delay(700);
+  const secHeaders = checkHeaders(url, html);
+  scanData.headers = secHeaders;
+  stepDone(2);
+
+  // Step 3: Tech Stack
+  stepActive(3);
+  await delay(600);
+  const tech = detectTech(html, url);
+  scanData.tech = tech;
+  stepDone(3);
+
+  // Step 4: Vulnerabilities
+  stepActive(4);
+  await delay(800);
+  const vulns = findVulnerabilities(html, url, tech);
+  scanData.vulns = vulns;
+  stepDone(4);
+
+  // Step 5: SSL + Exposed
+  stepActive(5);
+  await delay(700);
+  const ssl = checkSSL(url);
+  const exposed = checkExposedFiles(html);
+  scanData.ssl = ssl;
+  scanData.exposed = exposed;
+  stepDone(5);
+
+  // Step 6: Score
+  stepActive(6);
+  await delay(500);
+  scanData.score = calcScore(vulns, secHeaders, ssl, exposed);
+  stepDone(6);
+}
+
+function delay(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+// ── STRUCTURE ANALYSIS ──
+function analyzeStructure(html, url){
+  if(!html) return { pages:[], links:[], images:[], scripts:[], forms:[], meta:{} };
+  const parser=new DOMParser();
+  const doc=parser.parseFromString(html,'text/html');
+  const base=new URL(url);
+
+  // Internal links
+  const links=[...doc.querySelectorAll('a[href]')]
+    .map(a=>{ try{ return new URL(a.href,url).href; }catch{ return null; }})
+    .filter(h=>h&&new URL(h).hostname===base.hostname)
+    .filter((v,i,a)=>a.indexOf(v)===i).slice(0,30);
+
+  // External links
+  const extLinks=[...doc.querySelectorAll('a[href]')]
+    .map(a=>{ try{ const u=new URL(a.href,url); return u.hostname!==base.hostname?u.hostname:null; }catch{ return null; }})
+    .filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i).slice(0,15);
+
+  // Scripts
+  const scripts=[...doc.querySelectorAll('script[src]')].map(s=>s.src).filter(Boolean).slice(0,15);
+
+  // Images
+  const images=[...doc.querySelectorAll('img')].map(i=>i.src||i['data-src']).filter(Boolean).slice(0,10);
+
+  // Forms
+  const forms=[...doc.querySelectorAll('form')].map(f=>({
+    action:f.action||url,
+    method:(f.method||'GET').toUpperCase(),
+    inputs:[...f.querySelectorAll('input,select,textarea')].map(i=>i.name||i.type||'?').filter(Boolean),
+    hasPassword:!!f.querySelector('input[type=password]'),
+  }));
+
+  // Meta
+  const meta={
+    title:doc.title||'',
+    desc:(doc.querySelector('meta[name=description]')||{}).content||'',
+    charset:(doc.querySelector('meta[charset]')||{}).getAttribute?.('charset')||'UTF-8',
+    viewport:!!(doc.querySelector('meta[name=viewport]')),
+    ogTitle:(doc.querySelector('meta[property="og:title"]')||{}).content||'',
+    canonical:(doc.querySelector('link[rel=canonical]')||{}).href||'',
+    lang:doc.documentElement.lang||'',
+  };
+
+  // Content stats
+  const wordCount=(doc.body?.innerText||'').split(/\s+/).filter(Boolean).length;
+  const headings={h1:doc.querySelectorAll('h1').length,h2:doc.querySelectorAll('h2').length,h3:doc.querySelectorAll('h3').length};
+
+  return {links,extLinks,scripts,images,forms,meta,wordCount,headings,
+    rawSize:html.length,
+    hasRobots:html.includes('robots'),
+    hasSitemap:html.includes('sitemap'),
+  };
+}
+
+// ── SECURITY HEADERS (detected from HTML hints) ──
+function checkHeaders(url, html){
+  const isHttps = url.startsWith('https://');
+  const checks=[
+    {name:'HTTPS Protocol',    present:isHttps,   critical:true,   fix:'Migrate to HTTPS. Use Let\'s Encrypt for free SSL.'},
+    {name:'Content-Security-Policy', present:html.includes('content-security-policy')||html.includes('Content-Security-Policy'), critical:true, fix:'Add CSP header via your server config or meta tag.'},
+    {name:'X-Frame-Options',   present:html.includes('x-frame-options')||html.includes('X-Frame-Options'), critical:false, fix:'Set X-Frame-Options: DENY to prevent clickjacking.'},
+    {name:'X-Content-Type-Options', present:html.includes('nosniff'), critical:false, fix:'Add X-Content-Type-Options: nosniff header.'},
+    {name:'Strict-Transport-Security', present:html.includes('strict-transport-security')||html.includes('Strict-Transport'), critical:isHttps, fix:'Add HSTS header to enforce HTTPS.'},
+    {name:'Referrer-Policy',   present:html.includes('referrer-policy')||html.includes('referrer'), critical:false, fix:'Set Referrer-Policy: strict-origin-when-cross-origin.'},
+    {name:'robots.txt',        present:html.includes('Disallow')||html.includes('User-agent'), critical:false, fix:'Create a robots.txt file to control crawler access.'},
+    {name:'Viewport Meta Tag', present:html.includes('viewport'), critical:false, fix:'Add <meta name="viewport"> for mobile responsiveness.'},
+  ];
+  return checks;
+}
+
+// ── TECH DETECTION ──
+function detectTech(html, url){
+  if(!html) return [];
+  const h=html.toLowerCase();
+  const checks=[
+    {name:'WordPress',   icon:'🔵',cat:'CMS',         match:h.includes('wp-content')||h.includes('wp-includes')},
+    {name:'React',       icon:'⚛️', cat:'Frontend',    match:h.includes('react')||h.includes('__react')||h.includes('_next')},
+    {name:'Vue.js',      icon:'💚',cat:'Frontend',     match:h.includes('vue.js')||h.includes('vue.min')||h.includes('__vue')},
+    {name:'Angular',     icon:'🔴',cat:'Frontend',     match:h.includes('ng-version')||h.includes('angular.js')},
+    {name:'Next.js',     icon:'◼️', cat:'Framework',   match:h.includes('__next')||h.includes('_next/static')},
+    {name:'jQuery',      icon:'🟡',cat:'Library',      match:h.includes('jquery')},
+    {name:'Bootstrap',   icon:'🟣',cat:'CSS Framework',match:h.includes('bootstrap')},
+    {name:'Tailwind',    icon:'🩵',cat:'CSS Framework',match:h.includes('tailwind')},
+    {name:'Google Analytics',icon:'📊',cat:'Analytics',match:h.includes('google-analytics')||h.includes('gtag')||h.includes('ga(')},
+    {name:'Google Tag Manager',icon:'🏷️',cat:'Analytics',match:h.includes('googletagmanager')},
+    {name:'Stripe',      icon:'💳',cat:'Payment',      match:h.includes('js.stripe.com')},
+    {name:'PayPal',      icon:'🅿️', cat:'Payment',    match:h.includes('paypal.com')},
+    {name:'Cloudflare',  icon:'🟠',cat:'CDN/Security', match:h.includes('cloudflare')},
+    {name:'Font Awesome',icon:'🎨',cat:'Icons',        match:h.includes('font-awesome')||h.includes('fontawesome')},
+    {name:'Google Fonts',icon:'🔤',cat:'Fonts',        match:h.includes('fonts.googleapis')},
+    {name:'Shopify',     icon:'🛍️', cat:'E-Commerce',  match:h.includes('shopify')},
+    {name:'WooCommerce', icon:'🛒',cat:'E-Commerce',   match:h.includes('woocommerce')},
+    {name:'Intercom',    icon:'💬',cat:'Chat',         match:h.includes('intercom')},
+    {name:'Hotjar',      icon:'🔥',cat:'Analytics',    match:h.includes('hotjar')},
+    {name:'reCAPTCHA',   icon:'🤖',cat:'Security',     match:h.includes('recaptcha')},
+    {name:'Node.js',     icon:'🟢',cat:'Backend',      match:h.includes('express')||h.includes('node')},
+    {name:'PHP',         icon:'🐘',cat:'Backend',      match:h.includes('.php')||h.includes('php')},
+  ];
+  return checks.filter(c=>c.match);
+}
+
+// ── VULNERABILITIES ──
+function findVulnerabilities(html, url, tech){
+  const issues=[];
+  const h=html||'';
+  const isHttps=url.startsWith('https://');
+
+  // Critical
+  if(!isHttps) issues.push({sev:'c',title:'No HTTPS Encryption',desc:'Website is not using HTTPS. All data transmitted is unencrypted and visible to attackers.',fix:'Install an SSL certificate. Use Let\'s Encrypt (free). Redirect all HTTP to HTTPS.'});
+  if(h.includes('<?php') || h.includes('Parse error') || h.includes('Fatal error')) issues.push({sev:'c',title:'PHP Errors Visible',desc:'PHP source code or error messages are exposed to visitors.',fix:'Disable error display in production. Set display_errors = Off in php.ini.'});
+  if(/AKIA[0-9A-Z]{16}/.test(h)) issues.push({sev:'c',title:'AWS Access Key Exposed',desc:'An AWS access key was found in the page source code.',fix:'Immediately revoke this key in AWS IAM. Never hardcode credentials in frontend code.'});
+  if(/sk_live_[0-9a-zA-Z]{24}/.test(h)) issues.push({sev:'c',title:'Stripe Secret Key Exposed',desc:'A Stripe secret key was found publicly. This allows full access to your Stripe account.',fix:'Immediately revoke in Stripe Dashboard. Only use publishable keys on frontend.'});
+  if(/ghp_[A-Za-z0-9]{36}/.test(h)) issues.push({sev:'c',title:'GitHub Token Exposed',desc:'A GitHub personal access token was found in page source.',fix:'Immediately revoke at github.com/settings/tokens. Never expose tokens in frontend.'});
+  if(h.toLowerCase().includes('sql syntax')||h.toLowerCase().includes('mysql_fetch')||h.toLowerCase().includes('ora-')) issues.push({sev:'c',title:'SQL Error Exposed',desc:'Database error messages are visible. This reveals database structure to attackers.',fix:'Disable error display. Implement proper error handling. Never show DB errors to users.'});
+
+  // High
+  if(!h.includes('content-security-policy')&&!h.includes('Content-Security-Policy')) issues.push({sev:'h',title:'Missing Content-Security-Policy',desc:'No CSP header detected. Site is vulnerable to XSS and data injection attacks.',fix:'Add Content-Security-Policy header in your server config or use a <meta> CSP tag.'});
+  if(h.includes('<!--')&&h.toLowerCase().includes('password')) issues.push({sev:'h',title:'Credentials in HTML Comments',desc:'HTML comments may contain sensitive information like passwords.',fix:'Remove all sensitive data from HTML comments. Use server-side config files.'});
+  if(h.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/)) issues.push({sev:'h',title:'Email Address Exposed',desc:'Email address(es) found in page source. Risk of spam harvesting.',fix:'Use contact forms instead of showing raw email. Obfuscate emails in HTML.'});
+  if(tech.some(t=>t.name==='WordPress')) issues.push({sev:'h',title:'WordPress Detected — Update Check Required',desc:'WordPress sites are frequent attack targets. Outdated versions have known vulnerabilities.',fix:'Keep WordPress core, themes, and plugins updated. Use a security plugin like Wordfence.'});
+  if(h.toLowerCase().includes('version') && tech.some(t=>t.name==='jQuery')) issues.push({sev:'m',title:'jQuery Version Visible',desc:'jQuery version number detected in source. Attackers can target known version vulnerabilities.',fix:'Minify scripts, remove version strings from URLs, keep jQuery updated.'});
+  if(!isHttps && h.includes('password')) issues.push({sev:'h',title:'Password Form Over HTTP',desc:'Login form detected on non-HTTPS site. Credentials are transmitted unencrypted.',fix:'Urgent: Enable HTTPS immediately. All login pages must be served over HTTPS.'});
+
+  // Medium
+  if(!h.includes('viewport')) issues.push({sev:'m',title:'No Viewport Meta Tag',desc:'Missing viewport tag means poor mobile experience and potential security issues.',fix:'Add <meta name="viewport" content="width=device-width, initial-scale=1"> in <head>.'});
+  if(!h.includes('rel="noopener"') && !h.includes("rel='noopener'") && h.includes('target="_blank"')) issues.push({sev:'m',title:'Unsafe External Links (Missing noopener)',desc:'Links with target="_blank" without rel="noopener" allow opened pages to control your page.',fix:'Add rel="noopener noreferrer" to all target="_blank" links.'});
+  if(!h.includes('<title>') && !h.includes('<title ')) issues.push({sev:'m',title:'Missing Page Title Tag',desc:'Page has no title tag — bad for SEO and user experience.',fix:'Add a descriptive <title> tag inside your <head> section.'});
+  if(!h.includes('meta name="description"') && !h.includes("meta name='description'")) issues.push({sev:'m',title:'Missing Meta Description',desc:'No meta description found. Hurts SEO and social sharing previews.',fix:'Add <meta name="description" content="Your page description"> in <head>.'});
+  if(h.includes('autocomplete') && h.toLowerCase().includes('password')) issues.push({sev:'m',title:'Password Autocomplete Enabled',desc:'Password fields may allow browser autocomplete, risking credential exposure on shared devices.',fix:'Add autocomplete="off" or autocomplete="new-password" to password fields.'});
+
+  // Low
+  if(!h.includes('lang=') && !h.includes("lang='")) issues.push({sev:'l',title:'Missing HTML Lang Attribute',desc:'Language not declared. Affects accessibility and screen readers.',fix:'Add lang attribute to <html> tag, e.g. <html lang="en">.'});
+  if(!h.toLowerCase().includes('favicon')) issues.push({sev:'l',title:'No Favicon Detected',desc:'Website has no favicon. Minor but affects professional appearance.',fix:'Add a favicon.ico or <link rel="icon"> in your <head> section.'});
+  if(h.includes('<font ') || h.includes('font-size style=')) issues.push({sev:'l',title:'Deprecated HTML Tags Detected',desc:'Old-style HTML tags like <font> detected. Modern best practice uses CSS.',fix:'Replace deprecated HTML tags with CSS styles for maintainability.'});
+
+  return issues;
+}
+
+// ── SSL CHECK ──
+function checkSSL(url){
+  const isHttps=url.startsWith('https://');
+  return {
+    https:isHttps,
+    status:isHttps?'Active':'Not Configured',
+    grade:isHttps?'A':'F',
+    note:isHttps?'HTTPS detected. Certificate appears active.':'No HTTPS. Site data is not encrypted.',
+  };
+}
+
+// ── EXPOSED FILES ──
+function checkExposedFiles(html){
+  const findings=[];
+  const h=(html||'').toLowerCase();
+  if(h.includes('.env')) findings.push({file:'.env','risk':'Critical','note':'Environment config file reference found'});
+  if(h.includes('wp-config')) findings.push({file:'wp-config.php','risk':'Critical','note':'WordPress config reference found'});
+  if(h.includes('.git')) findings.push({file:'.git/','risk':'High','note':'Git repository reference found'});
+  if(h.includes('phpinfo')) findings.push({file:'phpinfo.php','risk':'High','note':'PHP info page reference found'});
+  if(h.includes('backup')) findings.push({file:'backup files','risk':'Medium','note':'Backup file references detected'});
+  return findings;
+}
+
+// ── SCORE ──
+function calcScore(vulns, headers, ssl, exposed){
+  let score=100;
+  vulns.forEach(v=>{ score-=v.sev==='c'?20:v.sev==='h'?10:v.sev==='m'?5:2; });
+  if(!ssl.https) score-=15;
+  exposed.forEach(e=>{ score-=e.risk==='Critical'?15:e.risk==='High'?8:4; });
+  score=Math.max(0,Math.min(100,score));
+  const label=score>=80?'GOOD':score>=60?'MODERATE':score>=40?'AT RISK':'CRITICAL';
+  const color=score>=80?'#00e676':score>=60?'#ffb300':score>=40?'#ff6432':'#ff3c5a';
+  return {score,label,color};
+}
+
+// ══════════════════════════════════════════════════
+//  BUILD REPORT
+// ══════════════════════════════════════════════════
+function buildReport(){
+  const d=scanData;
+  const {score,label,color}=d.score;
+  const critCount=d.vulns.filter(v=>v.sev==='c').length;
+  const highCount=d.vulns.filter(v=>v.sev==='h').length;
+  const medCount=d.vulns.filter(v=>v.sev==='m').length;
+  const lowCount=d.vulns.filter(v=>v.sev==='l').length;
+
+  // RISK HERO
+  const pct=score*3.6;
+  document.getElementById('riskHero').innerHTML=`
+    <div class="risk-ring" style="--ring-color:${color};--ring-pct:${pct}deg">
+      <div class="risk-ring-inner">
+        <div class="risk-score" style="color:${color}">${score}</div>
+        <div class="risk-lbl">SCORE</div>
+      </div>
+    </div>
+    <div class="risk-info">
+      <div class="risk-name" style="color:${color}">Security: ${label}</div>
+      <div class="risk-desc">
+        Analysis of <strong style="color:var(--blue)">${d.domain}</strong> completed on ${d.ts.toLocaleString()}.<br>
+        Found ${d.vulns.length} issues across structure, headers, and content.
+      </div>
+      <div class="risk-pills">
+        <span class="rpill bc">🔴 ${critCount} Critical</span>
+        <span class="rpill bh">🟠 ${highCount} High</span>
+        <span class="rpill bm">🟡 ${medCount} Medium</span>
+        <span class="rpill bl">🟢 ${lowCount} Low</span>
+      </div>
+    </div>`;
+
+  // STATS
+  const hasHtml=d.structure?.links?.length>0;
+  document.getElementById('statsMini').innerHTML=`
+    <div class="stat-mini"><div class="stat-mini-num" style="color:var(--purple)">${d.vulns.length}</div><div class="stat-mini-lbl">Issues Found</div></div>
+    <div class="stat-mini"><div class="stat-mini-num" style="color:var(--red)">${critCount}</div><div class="stat-mini-lbl">Critical</div></div>
+    <div class="stat-mini"><div class="stat-mini-num" style="color:var(--blue)">${d.structure?.links?.length||0}</div><div class="stat-mini-lbl">Internal Links</div></div>
+    <div class="stat-mini"><div class="stat-mini-num" style="color:var(--gold)">${d.structure?.scripts?.length||0}</div><div class="stat-mini-lbl">Scripts</div></div>
+    <div class="stat-mini"><div class="stat-mini-num" style="color:var(--green)">${d.tech.length}</div><div class="stat-mini-lbl">Technologies</div></div>
+    <div class="stat-mini"><div class="stat-mini-num" style="color:var(--orange)">${d.structure?.forms?.length||0}</div><div class="stat-mini-lbl">Forms</div></div>
+    <div class="stat-mini"><div class="stat-mini-num" style="color:d.ssl.https?'var(--green)':'var(--red)'">${d.ssl.grade}</div><div class="stat-mini-lbl">SSL Grade</div></div>
+    <div class="stat-mini"><div class="stat-mini-num" style="color:var(--text)">${d.structure?.extLinks?.length||0}</div><div class="stat-mini-lbl">Ext. Domains</div></div>
+  `;
+
+  // TABS
+  const tabs=[
+    {id:'findings',label:`🔴 Issues (${d.vulns.length})`},
+    {id:'structure',label:`🗺 Structure`},
+    {id:'headers',label:`🔒 Headers`},
+    {id:'tech',label:`🔧 Tech (${d.tech.length})`},
+    {id:'seo',label:`📈 SEO`},
+  ];
+  document.getElementById('reportTabs').innerHTML=tabs.map((t,i)=>`<button class="tab${i===0?' active':''}" onclick="switchTab('${t.id}',this)">${t.label}</button>`).join('');
+
+  // TAB CONTENT
+  document.getElementById('tabContent').innerHTML=`
+    <div class="tab-pane active" id="tp-findings">${buildFindings()}</div>
+    <div class="tab-pane" id="tp-structure">${buildStructure()}</div>
+    <div class="tab-pane" id="tp-headers">${buildHeaders()}</div>
+    <div class="tab-pane" id="tp-tech">${buildTech()}</div>
+    <div class="tab-pane" id="tp-seo">${buildSEO()}</div>
+  `;
+
+  // WHATSAPP REPORT
+  buildWAReport();
+}
+
+function switchTab(id,btn){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tp-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function sevClass(s){ return s==='c'?'c':s==='h'?'h':s==='m'?'m':'l'; }
+function sevBadge(s){ const m={c:['bc','CRITICAL'],h:['bh','HIGH'],m:['bm','MEDIUM'],l:['bl','LOW']}; const[cls,txt]=m[s]||['bg','INFO']; return `<span class="badge ${cls}">${txt}</span>`; }
+
+function buildFindings(){
+  if(!scanData.vulns.length) return '<div class="card"><div class="empty">✅ No vulnerabilities detected! Great job.</div></div>';
+  const sorted=[...scanData.vulns].sort((a,b)=>['c','h','m','l'].indexOf(a.sev)-['c','h','m','l'].indexOf(b.sev));
+  return '<div class="card"><div class="card-head">🔴 Security Findings</div>'+
+    sorted.map(v=>`
+      <div class="finding ${sevClass(v.sev)}">
+        <div class="finding-top"><div class="finding-title">${v.title}</div>${sevBadge(v.sev)}</div>
+        <div class="finding-desc">${v.desc}</div>
+        <div class="finding-fix">💡 ${v.fix}</div>
+      </div>`).join('')+'</div>';
+}
+
+function buildStructure(){
+  const s=scanData.structure;
+  if(!s) return '<div class="card"><div class="empty">Could not read page structure — site may block crawlers.</div></div>';
+  let html='';
+  html+=`<div class="card"><div class="card-head">📄 Page Information</div>`;
+  html+=`<div class="header-row"><span style="color:rgba(255,255,255,0.4)">Title</span><span>${s.meta.title||'None'}</span></div>`;
+  html+=`<div class="header-row"><span style="color:rgba(255,255,255,0.4)">Description</span><span style="max-width:300px;text-align:right;font-size:11px">${s.meta.desc?.substring(0,100)||'Not set'}</span></div>`;
+  html+=`<div class="header-row"><span style="color:rgba(255,255,255,0.4)">Language</span><span>${s.meta.lang||'Not set'}</span></div>`;
+  html+=`<div class="header-row"><span style="color:rgba(255,255,255,0.4)">Charset</span><span>${s.meta.charset}</span></div>`;
+  html+=`<div class="header-row"><span style="color:rgba(255,255,255,0.4)">Mobile-Ready</span><span class="${s.meta.viewport?'badge bl':'badge bc'}">${s.meta.viewport?'Yes':'No'}</span></div>`;
+  html+=`<div class="header-row"><span style="color:rgba(255,255,255,0.4)">Page Size</span><span>${(s.rawSize/1024).toFixed(1)}KB</span></div>`;
+  html+=`<div class="header-row"><span style="color:rgba(255,255,255,0.4)">Headings</span><span>H1:${s.headings.h1} H2:${s.headings.h2} H3:${s.headings.h3}</span></div>`;
+  html+=`</div>`;
+
+  if(s.links.length){
+    html+=`<div class="card"><div class="card-head">🔗 Internal Links (${s.links.length})</div>`;
+    html+=s.links.map(l=>`<div class="page-item"><span class="page-status" style="color:var(--green)">200</span><span class="page-url">${l}</span></div>`).join('');
+    html+=`</div>`;
+  }
+
+  if(s.forms.length){
+    html+=`<div class="card"><div class="card-head">📝 Forms Found (${s.forms.length})</div>`;
+    html+=s.forms.map(f=>`<div class="finding l"><div class="finding-title">${f.method} → ${f.action.substring(0,60)}</div><div class="finding-desc">Inputs: ${f.inputs.join(', ')||'none'}${f.hasPassword?' · 🔑 Has password field':''}</div></div>`).join('');
+    html+=`</div>`;
+  }
+
+  if(s.extLinks.length){
+    html+=`<div class="card"><div class="card-head">🌍 External Domains Referenced (${s.extLinks.length})</div>`;
+    html+=`<div style="display:flex;flex-wrap:wrap;gap:6px;">${s.extLinks.map(e=>`<span class="badge bb">${e}</span>`).join('')}</div>`;
+    html+=`</div>`;
+  }
+
+  if(s.scripts.length){
+    html+=`<div class="card"><div class="card-head">⚙️ JavaScript Files (${s.scripts.length})</div>`;
+    html+=s.scripts.map(sc=>`<div class="header-row"><span style="font-size:11px;color:var(--blue);word-break:break-all">${sc.substring(0,80)}</span></div>`).join('');
+    html+=`</div>`;
+  }
+
+  return html;
+}
+
+function buildHeaders(){
+  const h=scanData.headers;
+  let html=`<div class="card"><div class="card-head">🔒 Security Header Analysis</div>`;
+  h.forEach(hdr=>{
+    html+=`<div class="header-row">
+      <span style="font-size:13px">${hdr.name}</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        ${hdr.present?'<span class="badge bl">✓ Present</span>':'<span class="badge '+(hdr.critical?'bc':'bm')+'">✗ Missing</span>'}
+      </div>
+    </div>`;
+    if(!hdr.present) html+=`<div style="font-size:11px;color:#90be6d;padding:4px 0 8px 0">💡 ${hdr.fix}</div>`;
+  });
+  html+=`</div>`;
+
+  // SSL
+  const ssl=scanData.ssl;
+  html+=`<div class="card"><div class="card-head">🔐 SSL / HTTPS Status</div>
+    <div class="finding ${ssl.https?'l':'c'}">
+      <div class="finding-top"><div class="finding-title">SSL Certificate — Grade ${ssl.grade}</div>${ssl.https?'<span class="badge bl">ACTIVE</span>':'<span class="badge bc">MISSING</span>'}</div>
+      <div class="finding-desc">${ssl.note}</div>
+    </div>
+  </div>`;
+
+  // Exposed
+  if(scanData.exposed.length){
+    html+=`<div class="card"><div class="card-head">📂 Sensitive File References (${scanData.exposed.length})</div>`;
+    html+=scanData.exposed.map(e=>`<div class="finding ${e.risk==='Critical'?'c':'h'}"><div class="finding-top"><div class="finding-title">${e.file}</div><span class="badge ${e.risk==='Critical'?'bc':'bh'}">${e.risk}</span></div><div class="finding-desc">${e.note}</div></div>`).join('');
+    html+=`</div>`;
+  }
+
+  return html;
+}
+
+function buildTech(){
+  if(!scanData.tech.length) return '<div class="card"><div class="empty">No technologies detected — site may be blocking analysis or has very minimal frontend.</div></div>';
+  const cats={};
+  scanData.tech.forEach(t=>{ if(!cats[t.cat]) cats[t.cat]=[]; cats[t.cat].push(t); });
+  let html='';
+  Object.entries(cats).forEach(([cat,items])=>{
+    html+=`<div class="card"><div class="card-head">🔧 ${cat}</div><div style="display:flex;flex-wrap:wrap;">`;
+    html+=items.map(t=>`<div class="tech-tag"><div class="ti">${t.icon}</div><div class="tn">${t.name}</div><div class="tc">${t.cat}</div></div>`).join('');
+    html+=`</div></div>`;
+  });
+  return html;
+}
+
+function buildSEO(){
+  const s=scanData.structure?.meta||{};
+  const ssl=scanData.ssl;
+  let html=`<div class="card"><div class="card-head">📈 SEO & Performance Checks</div>`;
+  const seoChecks=[
+    {name:'Page Title',       pass:!!s.title,    value:s.title?`"${s.title.substring(0,50)}"`:undefined, fix:'Add a descriptive <title> tag.'},
+    {name:'Meta Description', pass:!!s.desc,     value:s.desc?`"${s.desc.substring(0,60)}..."`:undefined, fix:'Add <meta name="description">.'},
+    {name:'HTTPS',            pass:ssl.https,    value:ssl.https?'Enabled':undefined, fix:'Enable HTTPS for better SEO ranking.'},
+    {name:'Mobile Viewport',  pass:s.viewport,   value:s.viewport?'Set':undefined, fix:'Add viewport meta tag.'},
+    {name:'Language Set',     pass:!!s.lang,     value:s.lang||undefined, fix:'Set lang attribute on <html> tag.'},
+    {name:'Canonical URL',    pass:!!s.canonical,value:s.canonical?'Set':undefined, fix:'Add canonical <link> tag.'},
+    {name:'Open Graph Tags',  pass:!!s.ogTitle,  value:s.ogTitle?'Present':undefined, fix:'Add og:title, og:description for social sharing.'},
+    {name:'Charset Defined',  pass:!!s.charset,  value:s.charset||undefined, fix:'Add <meta charset="UTF-8">.'},
+  ];
+  seoChecks.forEach(c=>{
+    html+=`<div class="header-row">
+      <span>${c.name}</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        ${c.value?`<span style="font-size:11px;color:rgba(255,255,255,0.4)">${c.value}</span>`:''}
+        ${c.pass?'<span class="badge bl">✓ Good</span>':` <span class="badge bm">✗ Fix</span>`}
+      </div>
+    </div>
+    ${!c.pass?`<div style="font-size:11px;color:#90be6d;padding:2px 0 8px">💡 ${c.fix}</div>`:''}`;
+  });
+  html+=`</div>`;
+  return html;
+}
+
+// ══════════════════════════════════════════════════
+//  WHATSAPP REPORT BUILDER
+// ══════════════════════════════════════════════════
+function buildWAReport(){
+  const d=scanData;
+  const {score,label,color}=d.score;
+  const crit=d.vulns.filter(v=>v.sev==='c');
+  const high=d.vulns.filter(v=>v.sev==='h');
+  const med=d.vulns.filter(v=>v.sev==='m');
+  const low=d.vulns.filter(v=>v.sev==='l');
+  const emoji=score>=80?'✅':score>=60?'⚠️':score>=40?'🟠':'🔴';
+
+  let report=``;
+  report+=`🛡 *CYBER-ZERO SECURITY REPORT*\n`;
+  report+=`━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+  report+=`🌐 *Website:* ${d.domain}\n`;
+  report+=`📅 *Date:* ${d.ts.toLocaleDateString()}\n`;
+  report+=`⏰ *Time:* ${d.ts.toLocaleTimeString()}\n\n`;
+
+  report+=`${emoji} *SECURITY SCORE: ${score}/100 (${label})*\n\n`;
+
+  report+=`📊 *FINDINGS SUMMARY*\n`;
+  report+=`🔴 Critical: ${crit.length}\n`;
+  report+=`🟠 High: ${high.length}\n`;
+  report+=`🟡 Medium: ${med.length}\n`;
+  report+=`🟢 Low: ${low.length}\n`;
+  report+=`━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+  report+=`🔒 *SSL / HTTPS*\n`;
+  report+=`${d.ssl.https?'✅':'❌'} ${d.ssl.status} — Grade: *${d.ssl.grade}*\n\n`;
+
+  if(crit.length){
+    report+=`🚨 *CRITICAL ISSUES (Fix Immediately)*\n`;
+    crit.forEach((v,i)=>{ report+=`${i+1}. *${v.title}*\n   ${v.desc.substring(0,80)}...\n   💡 _${v.fix.substring(0,80)}_\n\n`; });
+  }
+
+  if(high.length){
+    report+=`⚠️ *HIGH PRIORITY ISSUES*\n`;
+    high.slice(0,3).forEach((v,i)=>{ report+=`${i+1}. *${v.title}*\n   💡 _${v.fix.substring(0,70)}_\n\n`; });
+  }
+
+  report+=`🔧 *TECHNOLOGY DETECTED*\n`;
+  if(d.tech.length) d.tech.slice(0,6).forEach(t=>{ report+=`${t.icon} ${t.name} (${t.cat})\n`; });
+  else report+=`_No technologies detected_\n`;
+  report+=`\n`;
+
+  report+=`🗺 *WEBSITE STRUCTURE*\n`;
+  report+=`🔗 Internal links: ${d.structure?.links?.length||0}\n`;
+  report+=`📝 Forms found: ${d.structure?.forms?.length||0}\n`;
+  report+=`⚙️ Scripts loaded: ${d.structure?.scripts?.length||0}\n`;
+  report+=`🌍 External domains: ${d.structure?.extLinks?.length||0}\n\n`;
+
+  report+=`━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+  report+=`_Powered by *Suleiman Alhassan*_\n`;
+  report+=`_SecureCheck AI — Cyber-Zero Scanner_`;
+
+  document.getElementById('waText').textContent=report;
+}
+
+function shareWA(){
+  const text=document.getElementById('waText').textContent;
+  window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank');
+}
+
+function copyReport(){
+  const text=document.getElementById('waText').textContent;
+  navigator.clipboard.writeText(text).then(()=>alert('✅ Report copied to clipboard!')).catch(()=>{
+    const ta=document.createElement('textarea');
+    ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+    alert('✅ Copied!');
+  });
+}
+
+function printReport(){
+  window.print();
+}
+
+// Enter key
+document.getElementById('urlInput').addEventListener('keydown',e=>{ if(e.key==='Enter') startScan(); });
+</script>
+</body>
+</html>
